@@ -296,7 +296,10 @@
                                       },                                      
                                       new ColumnProperty(nameof(ProductModel.ContainsSpecificationAttributes))
                                       {
-                                          Title = T("Admin.Catalog.Products.Fields.ContainsSpecificationAttributes").Text
+                                          Title = T("Admin.Catalog.Products.Fields.ContainsSpecificationAttributes").Text,
+                                          Width = "80",
+                                          ClassName = NopColumnClassDefaults.CenterAll,
+                                          Render = new RenderBoolean()
                                       },                                      
                                       new ColumnProperty(nameof(ProductModel.Published))
                                       {
