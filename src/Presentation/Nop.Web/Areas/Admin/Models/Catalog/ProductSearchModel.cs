@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Framework.Models;
@@ -55,6 +56,12 @@ namespace Nop.Web.Areas.Admin.Models.Catalog
 
         [NopResourceDisplayName("Admin.Catalog.Products.List.SearchPublished")]
         public int SearchPublishedId { get; set; }
+        
+        [NopResourceDisplayName("Admin.Catalog.Products.List.MinPrice")]
+        public decimal MinimumPrice { get; set; }
+
+        [NopResourceDisplayName("Admin.Catalog.Products.List.MaxPrice")]
+        public decimal MaximumPrice { get; set; }
 
         [NopResourceDisplayName("Admin.Catalog.Products.List.GoDirectlyToSku")]
         public string GoDirectlyToSku { get; set; }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.EMMA;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
@@ -303,7 +304,7 @@ namespace Nop.Web.Areas.Admin.Controllers
                 }
             }
         }
-
+        
         protected virtual async Task SaveManufacturerMappingsAsync(Product product, ProductModel model)
         {
             var existingProductManufacturers = await _manufacturerService.GetProductManufacturersByProductIdAsync(product.Id, true);
@@ -776,7 +777,7 @@ namespace Nop.Web.Areas.Admin.Controllers
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))
                 return await AccessDeniedDataTablesJson();
-
+            
             //prepare model
             var model = await _productModelFactory.PrepareProductListModelAsync(searchModel);
 
