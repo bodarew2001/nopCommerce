@@ -819,6 +819,8 @@ namespace Nop.Web.Areas.Admin.Factories
                     productModel.ProductTypeName = await _localizationService.GetLocalizedEnumAsync(product.ProductType);
                     if (product.ProductType == ProductType.SimpleProduct && product.ManageInventoryMethod == ManageInventoryMethod.ManageStock)
                         productModel.StockQuantityStr = (await _productService.GetTotalStockQuantityAsync(product)).ToString();
+                    var attributes = await _productAttributeService.GetProductAttributeMappingsByProductIdAsync(product.Id);
+                    productModel.ProductAttributesNumber = attributes.Count();
 
                     return productModel;
                 });

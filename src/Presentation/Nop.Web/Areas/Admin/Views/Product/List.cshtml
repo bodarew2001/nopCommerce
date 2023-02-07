@@ -290,6 +290,10 @@
                                           Title = T("Admin.Catalog.Products.Fields.Price").Text,
                                           Render = new RenderCustom("renderColumnPrice")
                                       },
+                                      new ColumnProperty(nameof(ProductModel.ProductAttributesNumber))
+                                      {
+                                          Title = T("Admin.Catalog.Products.Fields.AttributesNumber").Text
+                                      },                                      
                                       new ColumnProperty(nameof(ProductModel.Published))
                                       {
                                           Title = T("Admin.Catalog.Products.Fields.Published").Text,

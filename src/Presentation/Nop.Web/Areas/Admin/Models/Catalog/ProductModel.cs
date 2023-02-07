@@ -436,6 +436,8 @@ namespace Nop.Web.Areas.Admin.Models.Catalog
         public IList<ProductVideoModel> ProductVideoModels { get; set; }
 
         //product attributes
+        [NopResourceDisplayName("Admin.Catalog.Products.Fields.AttributesNumber")]
+        public int ProductAttributesNumber { get; set; }
         public bool ProductAttributesExist { get; set; }
         public bool CanCreateCombinations { get; set; }
 
