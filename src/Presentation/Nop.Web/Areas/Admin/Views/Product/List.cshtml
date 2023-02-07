@@ -278,7 +278,8 @@
                                       },
                                       new ColumnProperty(nameof(ProductModel.Name))
                                       {
-                                          Title = T("Admin.Catalog.Products.Fields.Name").Text
+                                          Title = T("Admin.Catalog.Products.Fields.Name").Text,
+                                          Render = new RenderCustom("renderColumnName")
                                       },
                                       new ColumnProperty(nameof(ProductModel.Sku))
                                       {
@@ -317,12 +318,32 @@
                                       }
                                   }
                          })
-
-                              <script>
+                            <script>
                             function renderColumnPrice(data, type, row, meta) {
                                 return (row.ProductTypeId != @((int)ProductType.GroupedProduct) ) ? data : null;
                             }
-
+                            
+                            function renderColumnName(data,type,row,meta){
+                                const cutoff=100;
+                                if ( type !== 'display' ) {
+                                    return data;
+                                }
+                         
+                                if ( typeof data !== 'number' && typeof data !== 'string' ) {
+                                    return data;
+                                }
+                         
+                                data = data.toString(); // cast numbers
+                         
+                                if ( data.length <= cutoff ) {
+                        
+                                    return data;
+                                }
+                         
+                                var shortened = data.substring(0, cutoff-1);
+                         
+                                return '<span class="ellipsis" title="'+data+'">'+shortened+'&#8230;</span>';
+                            }
                             $(document).ready(function () {
                                 $('#delete-selected-action-confirmation-submit-button').bind('click', function () {
                                     var postData = {
@@ -352,7 +373,7 @@
                             });
 
                               </script>
-                              <nop-alert asp-alert-id="deleteSelectedFailed" />
+                            <nop-alert asp-alert-id="deleteSelectedFailed" />
                               <nop-alert asp-alert-id="nothingSelectedAlert" />
                           </div>
                       </div>
