@@ -821,6 +821,8 @@ namespace Nop.Web.Areas.Admin.Factories
                         productModel.StockQuantityStr = (await _productService.GetTotalStockQuantityAsync(product)).ToString();
                     var attributes = await _productAttributeService.GetProductAttributeMappingsByProductIdAsync(product.Id);
                     productModel.ProductAttributesNumber = attributes.Count();
+                    productModel.ContainsSpecificationAttributes =
+                        (await _specificationAttributeService.GetProductSpecificationAttributesAsync(product.Id)).Any();
 
                     return productModel;
                 });
@@ -929,6 +931,8 @@ namespace Nop.Web.Areas.Admin.Factories
             model.IsLoggedInAsVendor = await _workContext.GetCurrentVendorAsync() != null;
             model.HasAvailableSpecificationAttributes =
                 (await _specificationAttributeService.GetSpecificationAttributesWithOptionsAsync()).Any();
+            model.ContainsSpecificationAttributes =
+                (await _specificationAttributeService.GetProductSpecificationAttributesAsync(model.Id)).Any();
 
             //prepare localized models
             if (!excludeProperties)
