@@ -1,5 +1,70 @@
+@inherits Nop.Web.Framework.Mvc.Razor.NopRazorPage<TModel>
+@using Nop.Web.Areas.Admin.Components
+@using Nop.Plugin.Seed.ProductSync.Models;
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, Nop.Web.Framework
+
+@model ConfigurationModel
+
 @{
     Layout = "_ConfigurePlugin";
 }
 
-<h1>Product sync configure page</h1>
+@await Component.InvokeAsync(typeof(StoreScopeConfigurationViewComponent))
+
+<form asp-controller="SeedProductSync" asp-action="Configure" method="post">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card card-default">
+                <div class="card-body">
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="InfigoUrl"></nop-label>
+                        </div>
+                        <div class="col-md-6">
+                            <nop-editor asp-for="InfigoUrl"></nop-editor>
+                            <span asp-validation-for="InfigoUrl"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="ApiToken"></nop-label>
+                        </div>
+                        <div class="col-md-6">
+                            <nop-editor asp-for="ApiToken"></nop-editor>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="Enabled"></nop-label>
+                        </div>
+                        <div class="col-md-6">
+                            <nop-editor asp-for="Enabled"></nop-editor>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="SyncImages"></nop-label>
+                        </div>
+                        <div class="col-md-6">
+                            <nop-editor asp-for="SyncImages"></nop-editor>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="DeleteProduct"></nop-label>
+                        </div>
+                        <div class="col-md-6">
+                            <nop-editor asp-for="DeleteProduct"></nop-editor>
+                        </div>
+                    </div>
+                </div>
+                    <div class="form-group row" id="pnlSave">
+                        <div class="col-md-9 offset-md-3">
+                            <button type="submit" class="btn btn-success">Save</button>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </section>
+</form>

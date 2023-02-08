@@ -1,5 +1,9 @@
-﻿using Nop.Core;
+﻿using System.Collections.Generic;
+using Nop.Core;
+using Nop.Services.Configuration;
+using Nop.Services.Localization;
 using Nop.Services.Plugins;
+using Svg.FilterEffects;
 using Task = System.Threading.Tasks.Task;
 
 namespace Nop.Plugin.Seed.ProductSync;
@@ -7,10 +11,31 @@ namespace Nop.Plugin.Seed.ProductSync;
 public class ProductSyncPlugin:BasePlugin
 {
     private readonly IWebHelper _webHelper;
+    private readonly ILocalizationService _localizationService;
+    private readonly ISettingService _settingService;
 
-    public ProductSyncPlugin(IWebHelper webHelper)
+    public ProductSyncPlugin(IWebHelper webHelper, ILocalizationService localizationService)
     {
         _webHelper = webHelper;
+        _localizationService = localizationService;
+    }
+
+    public override async Task InstallAsync()
+    {
+        var productSyncService = new ProductSyncSettings()
+        {
+            DeleteProduct = true,
+            Enabled = true,
+            SyncImages = true
+        };
+        await _settingService.SaveSettingAsync(productSyncService);
+        await base.InstallAsync();
+    }
+    
+    public override async Task UninstallAsync()
+    {
+        await _settingService.DeleteSettingAsync<ProductSyncSettings>();
+        await base.InstallAsync();
     }
 
     public override string GetConfigurationPageUrl()
