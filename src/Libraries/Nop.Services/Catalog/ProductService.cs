@@ -2856,16 +2856,6 @@ namespace Nop.Services.Catalog
             await _discountProductMappingRepository.DeleteAsync(discountProductMapping);
         }
 
-        public async Task<decimal> GetMaxPrice()
-        {
-            return await _productRepository.Table.MaxAsync(x => x.Price);
-        }
-
-        public async Task<decimal> GetMinPrice()
-        {
-            return await _productRepository.Table.MinAsync(x => x.Price);
-        }
-
         #endregion
 
         #endregion

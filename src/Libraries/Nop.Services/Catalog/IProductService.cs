@@ -977,11 +977,5 @@ namespace Nop.Services.Catalog
 
         #endregion
 
-        #region Product prices
-
-        Task<decimal> GetMaxPrice();
-        Task<decimal> GetMinPrice();
-
-        #endregion
     }
 }
