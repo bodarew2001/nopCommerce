@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Nop.Core.Domain.Common;
+using Nop.Core.Infrastructure;
 using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
@@ -55,6 +58,12 @@ namespace Nop.Web.Areas.Admin.Models.Catalog
 
         [NopResourceDisplayName("Admin.Catalog.Products.List.SearchPublished")]
         public int SearchPublishedId { get; set; }
+        
+        [NopResourceDisplayName("Admin.Catalog.Products.List.MinPrice")]
+        public decimal MinimumPrice { get; set; }
+
+        [NopResourceDisplayName("Admin.Catalog.Products.List.MaxPrice")]
+        public decimal MaximumPrice { get; set; }
 
         [NopResourceDisplayName("Admin.Catalog.Products.List.GoDirectlyToSku")]
         public string GoDirectlyToSku { get; set; }
@@ -81,6 +90,22 @@ namespace Nop.Web.Areas.Admin.Models.Catalog
 
         public IList<SelectListItem> AvailablePublishedOptions { get; set; }
 
+        #endregion
+
+        #region Methods
+        
+        public void SetGridPageSize()
+        {
+            SetGridPageSize(10, "10, 20, 50, 100");
+        }
+        
+        public void SetGridPageSize(int pageSize, string availablePageSizes = null)
+        {
+            Start = 0;
+            Length = pageSize;
+            AvailablePageSizes = availablePageSizes;
+        }
+        
         #endregion
     }
 }

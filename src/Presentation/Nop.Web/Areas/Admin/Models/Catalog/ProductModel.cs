@@ -436,6 +436,8 @@ namespace Nop.Web.Areas.Admin.Models.Catalog
         public IList<ProductVideoModel> ProductVideoModels { get; set; }
 
         //product attributes
+        [NopResourceDisplayName("Admin.Catalog.Products.Fields.AttributesNumber")]
+        public int ProductAttributesNumber { get; set; }
         public bool ProductAttributesExist { get; set; }
         public bool CanCreateCombinations { get; set; }
 
@@ -444,7 +446,9 @@ namespace Nop.Web.Areas.Admin.Models.Catalog
         public IList<ProductWarehouseInventoryModel> ProductWarehouseInventoryModels { get; set; }
 
         //specification attributes
+        [NopResourceDisplayName("Admin.Catalog.Products.Fields.ContainsSpecificationAttributes")]
         public bool HasAvailableSpecificationAttributes { get; set; }
+        public bool ContainsSpecificationAttributes { get; set; }
 
         //copy product
         public CopyProductModel CopyProductModel { get; set; }

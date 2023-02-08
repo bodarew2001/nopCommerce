@@ -779,10 +779,17 @@ namespace Nop.Web.Areas.Admin.Factories
                 categoryIds.AddRange(childCategoryIds);
             }
 
+            var minimumPrice = searchModel.MinimumPrice == 0 && searchModel.MaximumPrice == 0
+                ? null : searchModel?.MinimumPrice;
+            var maximumPrice = searchModel.MinimumPrice == 0 && searchModel.MaximumPrice == 0
+                ? null : searchModel?.MaximumPrice;
+
             //get products
             var products = await _productService.SearchProductsAsync(showHidden: true,
                 categoryIds: categoryIds,
                 manufacturerIds: new List<int> { searchModel.SearchManufacturerId },
+                priceMin:minimumPrice,
+                priceMax:maximumPrice,
                 storeId: searchModel.SearchStoreId,
                 vendorId: searchModel.SearchVendorId,
                 warehouseId: searchModel.SearchWarehouseId,
@@ -809,6 +816,10 @@ namespace Nop.Web.Areas.Admin.Factories
                     productModel.ProductTypeName = await _localizationService.GetLocalizedEnumAsync(product.ProductType);
                     if (product.ProductType == ProductType.SimpleProduct && product.ManageInventoryMethod == ManageInventoryMethod.ManageStock)
                         productModel.StockQuantityStr = (await _productService.GetTotalStockQuantityAsync(product)).ToString();
+                    var attributes = await _productAttributeService.GetProductAttributeMappingsByProductIdAsync(product.Id);
+                    productModel.ProductAttributesNumber = attributes.Count();
+                    productModel.ContainsSpecificationAttributes =
+                        (await _specificationAttributeService.GetProductSpecificationAttributesAsync(product.Id)).Any();
 
                     return productModel;
                 });
@@ -917,6 +928,8 @@ namespace Nop.Web.Areas.Admin.Factories
             model.IsLoggedInAsVendor = await _workContext.GetCurrentVendorAsync() != null;
             model.HasAvailableSpecificationAttributes =
                 (await _specificationAttributeService.GetSpecificationAttributesWithOptionsAsync()).Any();
+            model.ContainsSpecificationAttributes =
+                (await _specificationAttributeService.GetProductSpecificationAttributesAsync(model.Id)).Any();
 
             //prepare localized models
             if (!excludeProperties)

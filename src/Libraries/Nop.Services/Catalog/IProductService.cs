@@ -606,6 +606,7 @@ namespace Nop.Services.Catalog
         Task<IList<TierPrice>> GetTierPricesByProductAsync(int productId);
 
         /// <summary>
+        /// 
         /// Deletes a tier price
         /// </summary>
         /// <param name="tierPrice">Tier price</param>
@@ -975,5 +976,6 @@ namespace Nop.Services.Catalog
         Task DeleteDiscountProductMappingAsync(DiscountProductMapping discountProductMapping);
 
         #endregion
+
     }
 }
