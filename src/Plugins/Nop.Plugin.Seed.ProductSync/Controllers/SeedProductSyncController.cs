@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Plugin.Seed.ProductSync.Models;
+using Nop.Plugin.Seed.ProductSync.Services;
 using Nop.Services.Configuration;
 using Nop.Services.Plugins;
 using Nop.Services.Security;
@@ -19,11 +20,13 @@ public class SeedProductSyncController : BasePluginController
     private readonly IPermissionService _permissionService;
     private readonly ISettingService _settingService;
     private readonly IStoreContext _storeContext;
+    private readonly ProductSyncService _productSyncService;
 
-    public SeedProductSyncController(IPermissionService permissionService, ISettingService settingService)
+    public SeedProductSyncController(IPermissionService permissionService, ISettingService settingService, ProductSyncService productSyncService)
     {
         _permissionService = permissionService;
         _settingService = settingService;
+        _productSyncService = productSyncService;
     }
 
     public async Task<IActionResult> Configure()
@@ -32,7 +35,9 @@ public class SeedProductSyncController : BasePluginController
             return AccessDeniedView();
 
         var productSyncSettings = await _settingService.LoadSettingAsync<ProductSyncSettings>();
-        
+        var testResult = await _productSyncService.GetProductByIdAsync(1178);
+        var testResultIds = await _productSyncService.GetProductIdsAsync();
+        var testResultProducts = await _productSyncService.GetAllProductsDetails();
         var model = new ConfigurationModel()
         {
             Enabled = productSyncSettings.Enabled,
