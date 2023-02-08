@@ -1,0 +1,11 @@
+{
+  "Group": "Seed",
+  "FriendlyName": "Product Sync",
+  "SystemName": "Seed.ProductSeed",
+  "Version": "1",
+  "SupportedVersions": [ "4.70" ],
+  "Author": "VB",
+  "DisplayOrder": 1,
+  "FileName": "Nop.Plugin.Seed.ProductSync.dll",
+  "Description": "Get products from API"
+}
