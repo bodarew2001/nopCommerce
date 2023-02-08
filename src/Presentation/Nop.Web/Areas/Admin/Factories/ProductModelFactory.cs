@@ -747,9 +747,6 @@ namespace Nop.Web.Areas.Admin.Factories
                 Value = "2",
                 Text = await _localizationService.GetResourceAsync("Admin.Catalog.Products.List.SearchPublished.UnpublishedOnly")
             });
-            
-            //prepare min and max price
-            //searchModel.MinimumPrice=
 
             //prepare grid
             searchModel.SetGridPageSize();
@@ -783,9 +780,9 @@ namespace Nop.Web.Areas.Admin.Factories
             }
 
             var minimumPrice = searchModel.MinimumPrice == 0 && searchModel.MaximumPrice == 0
-                ? await _productService.GetMinPrice() : searchModel.MinimumPrice;
+                ? null : searchModel?.MinimumPrice;
             var maximumPrice = searchModel.MinimumPrice == 0 && searchModel.MaximumPrice == 0
-                ? await _productService.GetMaxPrice() : searchModel.MaximumPrice;
+                ? null : searchModel?.MaximumPrice;
 
             //get products
             var products = await _productService.SearchProductsAsync(showHidden: true,
