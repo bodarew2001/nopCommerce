@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Caching;
@@ -108,6 +109,12 @@ namespace Nop.Services.Catalog
         public virtual async Task<ProductAttribute> GetProductAttributeByIdAsync(int productAttributeId)
         {
             return await _productAttributeRepository.GetByIdAsync(productAttributeId, cache => default);
+        }
+
+        public async Task<ProductAttribute> GetProductAttributeByNameAsync(string productAttributeName)
+        {
+            var result = await _productAttributeRepository.Table.FirstOrDefaultAsync(x=>x.Name==productAttributeName);
+            return result;
         }
 
         /// <summary>

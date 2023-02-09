@@ -14,10 +14,11 @@ public class ProductSyncPlugin:BasePlugin
     private readonly ILocalizationService _localizationService;
     private readonly ISettingService _settingService;
 
-    public ProductSyncPlugin(IWebHelper webHelper, ILocalizationService localizationService)
+    public ProductSyncPlugin(IWebHelper webHelper, ILocalizationService localizationService, ISettingService settingService)
     {
         _webHelper = webHelper;
         _localizationService = localizationService;
+        _settingService = settingService;
     }
 
     public override async Task InstallAsync()

@@ -1,6 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Nop.Core;
+using Nop.Plugin.Seed.ProductSync.Clients;
 using Nop.Plugin.Seed.ProductSync.Models;
 using Nop.Plugin.Seed.ProductSync.Services;
 using Nop.Services.Configuration;
@@ -19,25 +22,25 @@ public class SeedProductSyncController : BasePluginController
 {
     private readonly IPermissionService _permissionService;
     private readonly ISettingService _settingService;
-    private readonly IStoreContext _storeContext;
-    private readonly ProductSyncService _productSyncService;
+    private readonly IProductSyncService _productSyncService;
+    private readonly IInfigoClient _infigoClient;
 
-    public SeedProductSyncController(IPermissionService permissionService, ISettingService settingService, ProductSyncService productSyncService)
+    public SeedProductSyncController(IPermissionService permissionService, ISettingService settingService, IProductSyncService productSyncService, IInfigoClient infigoClient)
     {
         _permissionService = permissionService;
         _settingService = settingService;
         _productSyncService = productSyncService;
+        _infigoClient = infigoClient;
     }
+    
 
     public async Task<IActionResult> Configure()
     {
+        await _productSyncService.Merge();
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePaymentMethods))
             return AccessDeniedView();
-
+        var result = await _productSyncService.GetByIdProductEntity(1180);
         var productSyncSettings = await _settingService.LoadSettingAsync<ProductSyncSettings>();
-        var testResult = await _productSyncService.GetProductByIdAsync(1178);
-        var testResultIds = await _productSyncService.GetProductIdsAsync();
-        var testResultProducts = await _productSyncService.GetAllProductsDetails();
         var model = new ConfigurationModel()
         {
             Enabled = productSyncSettings.Enabled,

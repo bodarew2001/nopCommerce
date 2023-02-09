@@ -48,6 +48,16 @@ namespace Nop.Services.Catalog
         Task<ProductAttribute> GetProductAttributeByIdAsync(int productAttributeId);
 
         /// <summary>
+        /// Gets a product attribute 
+        /// </summary>
+        /// <param name="productAttributeName">Product attribute name</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the product attribute 
+        /// </returns>
+        Task<ProductAttribute> GetProductAttributeByNameAsync(string productAttributeName);
+
+        /// <summary>
         /// Gets product attributes 
         /// </summary>
         /// <param name="productAttributeIds">Product attribute identifiers</param>
