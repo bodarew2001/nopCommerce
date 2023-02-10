@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Caching;
@@ -1764,6 +1765,17 @@ namespace Nop.Services.Catalog
                 .ToListAsync();
 
             return queryFilter.Except(filter).ToArray();
+        }
+
+        public async Task<Product> GetByTag(string tag)
+        {
+            var tagEntity = await _productTagRepository.Table.FirstOrDefaultAsync(x => x.Name == tag);
+            if (tagEntity is null)
+            {
+                throw new ArgumentException($"Can not find {tag} tag");
+            }
+            var productId = _productTagMappingRepository.Table.FirstOrDefault(x => x.ProductTagId == tagEntity.Id)?.ProductId;
+            return productId == null ? null : await GetProductByIdAsync(Convert.ToInt32(productId));
         }
 
         #endregion

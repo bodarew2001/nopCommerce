@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Nop.Core;
 using Nop.Core.Domain.ScheduleTasks;
+using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Plugins;
@@ -11,7 +12,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Nop.Plugin.Seed.ProductSync;
 
-public class ProductSyncPlugin:BasePlugin
+public class ProductSyncPlugin:BasePlugin,IMiscPlugin
 {
     private readonly IWebHelper _webHelper;
     private readonly ILocalizationService _localizationService;

@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Text.Json;
 using Nop.Plugin.Seed.ProductSync.Models.ApiModels;
@@ -17,7 +17,7 @@ public class InfigoClient:IInfigoClient
     public InfigoClient(ProductSyncSettings settings)
     {
         _settings = settings;
-        if(InfigoClient.IsConfigured(_settings))
+        if(IsConfigured(_settings))
         {
             
             var options = new RestClientOptions($"{_settings.InfigoUrl}")
@@ -30,25 +30,32 @@ public class InfigoClient:IInfigoClient
 
     public async Task<List<ApiDataModel>> GetList()
     {
-        if (InfigoClient.IsConfigured(_settings))
+        if (IsConfigured(_settings))
         {
             var ids = await GetIds();
             var dataModels = new List<ApiDataModel>();
             foreach (var id in ids)
             {
-                var model = await GetById(id);
-                dataModels.Add(model);
+                try
+                {
+                    var model = await GetById(id);
+                    dataModels.Add(model);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"GetList of ApiDataModel failed on model with id {id}!", ex);
+                }
             }
 
             return dataModels;
         }
 
-        return null;
+        throw new Exception("Product sync plugin isn't configured!");
     }
 
     public async Task<List<int>> GetIds()
     {
-        if (InfigoClient.IsConfigured(_settings))
+        if (IsConfigured(_settings))
         {
             var request = new RestRequest($"Services/api/Catalog/ProductList");
             var response = await _client.ExecuteAsync(request);
@@ -56,12 +63,13 @@ public class InfigoClient:IInfigoClient
             var model = JsonSerializer.Deserialize<List<int>>(response.Content);
             return model;
         }
-        return null;
+
+        throw new Exception("Product sync plugin isn't configured!");
     }
 
     public async Task<ApiDataModel> GetById(int id)
     {
-        if (InfigoClient.IsConfigured(_settings))
+        if (IsConfigured(_settings))
         {
             var request = new RestRequest($"Services/api/Catalog/ProductDetails/{id}");
             var response = await _client.ExecuteAsync(request);
@@ -69,10 +77,10 @@ public class InfigoClient:IInfigoClient
             var model = JsonSerializer.Deserialize<ApiDataModel>(response.Content);
             return model;
         }
-        return null;
+        throw new Exception("Product sync plugin isn't configured!");
     }
     
-    public static bool IsConfigured(ProductSyncSettings settings)
+    public bool IsConfigured(ProductSyncSettings settings)
     {
         return !string.IsNullOrEmpty(settings?.InfigoUrl) && !string.IsNullOrEmpty(settings?.ApiToken);
     }

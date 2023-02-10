@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core.Infrastructure;
 using Nop.Plugin.Seed.ProductSync.Clients;
+using Nop.Plugin.Seed.ProductSync.Factories;
 using Nop.Plugin.Seed.ProductSync.Services;
 using Nop.Services.Catalog;
 
@@ -14,6 +15,7 @@ public class NopStartup:INopStartup
     {
         services.AddScoped<IProductSyncService, ProductSyncService>();
         services.AddScoped<IInfigoClient,InfigoClient>();
+        services.AddScoped<IProductSyncFactory, ProductSyncFactory>();
     }
 
     public void Configure(IApplicationBuilder application)

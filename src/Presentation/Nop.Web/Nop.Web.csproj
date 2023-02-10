@@ -39,41 +39,6 @@
     <None Remove="Plugins\**;Themes\**" />
     <None Include="Plugins\**" CopyToPublishDirectory="PreserveNewest" Exclude="Plugins\**\runtimes\**;Plugins\**\ref\**;Plugins\**\*.pdb" />
     <Content Include="App_Data\appsettings.json" />
-    <Content Include="Plugins\Seed.ProductSync\Nop.Plugin.Seed.ProductSync.dll" />
-    <Content Include="Plugins\Seed.ProductSync\Nop.Plugin.Seed.ProductSync.pdb" />
-    <Content Include="Plugins\Seed.ProductSync\Nop.Web.deps.json" />
-    <Content Include="Plugins\Seed.ProductSync\Nop.Web.runtimeconfig.dev.json" />
-    <Content Include="Plugins\Seed.ProductSync\Nop.Web.runtimeconfig.json" />
-    <Content Include="Plugins\Seed.ProductSync\Nop.Web.staticwebassets.runtime.json" />
-    <Content Include="Plugins\Seed.ProductSync\plugin.json" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\linux-arm64\native\libHarfBuzzSharp.so" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\linux-arm64\native\libSkiaSharp.so" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\linux-arm\native\libHarfBuzzSharp.so" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\linux-arm\native\libSkiaSharp.so" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\linux-musl-x64\native\libHarfBuzzSharp.so" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\linux-musl-x64\native\libSkiaSharp.so" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\linux-x64\native\libHarfBuzzSharp.so" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\linux-x64\native\libSkiaSharp.so" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\osx\native\libHarfBuzzSharp.dylib" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\osx\native\libSkiaSharp.dylib" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\unix\lib\netcoreapp3.1\Microsoft.Data.SqlClient.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win-arm64\native\libHarfBuzzSharp.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win-arm64\native\libSkiaSharp.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win-x64\native\libHarfBuzzSharp.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win-x64\native\libSkiaSharp.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win-x86\native\libHarfBuzzSharp.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win-x86\native\libSkiaSharp.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win\lib\net7.0\Microsoft.Win32.SystemEvents.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win\lib\net7.0\System.Drawing.Common.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win\lib\net7.0\System.Security.Cryptography.ProtectedData.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win\lib\net7.0\System.Windows.Extensions.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win\lib\netcoreapp2.0\System.Diagnostics.PerformanceCounter.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win\lib\netcoreapp3.1\Microsoft.Data.SqlClient.dll" />
-    <Content Include="Plugins\Seed.ProductSync\runtimes\win\lib\netstandard2.0\System.Runtime.Caching.dll" />
-
     <Content Include="Themes\**" CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="Never" />
 
     <!-- We copy the \Logs directory -->
@@ -87,14 +52,6 @@
     <None Update="Areas\Admin\sitemap.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-
-    <None Remove="Plugins\Seed.ProductSync\**" />
-
-    <Compile Remove="Plugins\Seed.ProductSync\**" />
-
-    <EmbeddedResource Remove="Plugins\Seed.ProductSync\**" />
-
-    <Content Remove="Plugins\Seed.ProductSync\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -104,15 +61,6 @@
     in order to avoid the "Duplicate dll" error during publication. 
     We can also use “ExcludeConfigFilesFromBuildOutput” according to https://github.com/aspnet/AspNetCore/issues/14017 -->
     <Content Update="**\*.config;**\*.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="Plugins\Seed.ProductSync\Views\Configure.cshtml" />
-    <_ContentIncludedByDefault Remove="Plugins\Seed.ProductSync\Nop.Web.deps.json" />
-    <_ContentIncludedByDefault Remove="Plugins\Seed.ProductSync\Nop.Web.runtimeconfig.dev.json" />
-    <_ContentIncludedByDefault Remove="Plugins\Seed.ProductSync\Nop.Web.runtimeconfig.json" />
-    <_ContentIncludedByDefault Remove="Plugins\Seed.ProductSync\Nop.Web.staticwebassets.runtime.json" />
-    <_ContentIncludedByDefault Remove="Plugins\Seed.ProductSync\plugin.json" />
   </ItemGroup>
 
   <!-- This target execute after "Build" target.

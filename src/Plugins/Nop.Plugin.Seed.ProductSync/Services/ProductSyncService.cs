@@ -3,13 +3,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Media;
 using Nop.Data;
 using Nop.Plugin.Seed.ProductSync.Clients;
+using Nop.Plugin.Seed.ProductSync.Factories;
 using Nop.Plugin.Seed.ProductSync.Models.ApiModels;
+using Nop.Plugin.Seed.ProductSync.Services.Helpers;
 using Nop.Services.Catalog;
 using Nop.Services.Media;
 using Nop.Services.Security;
@@ -27,17 +31,19 @@ public class ProductSyncService : IProductSyncService
     private readonly IInfigoClient _infigoClient;
     private readonly IPictureService _pictureService;
     private readonly IRepository<ProductProductTagMapping> _productProductTagMapping;
+    private readonly IProductSyncFactory _productSyncFactory;
 
     #endregion
 
     #region ctor
 
     public ProductSyncService(
-        ProductSyncSettings settings, 
+        ProductSyncSettings settings,
         IPermissionService permissionService,
-        IProductTagService productTagService, 
+        IProductTagService productTagService,
         IProductService productService,
-        IInfigoClient infigoClient, IProductAttributeService productAttributeService, IPictureService pictureService, IRepository<ProductProductTagMapping> productProductTagMapping)
+        IInfigoClient infigoClient, IProductAttributeService productAttributeService, IPictureService pictureService,
+        IRepository<ProductProductTagMapping> productProductTagMapping, IProductSyncFactory productSyncFactory)
     {
         _settings = settings;
         _productTagService = productTagService;
@@ -46,26 +52,12 @@ public class ProductSyncService : IProductSyncService
         _productAttributeService = productAttributeService;
         _pictureService = pictureService;
         _productProductTagMapping = productProductTagMapping;
+        _productSyncFactory = productSyncFactory;
     }
 
     #endregion
 
     #region Methods
-
-    public async Task<List<Product>> GetAllProducts()
-    {
-        var models = await _infigoClient.GetList();
-        var entities = await models.Select(x => MapToProductEntity(x)).ToListAsync();
-
-        return entities;
-    }
-
-    public async Task<Product> GetByIdProductEntity(int apiDataModelId)
-    {
-        var apiDataModel = await _infigoClient.GetById(apiDataModelId);
-        var entity = MapToProductEntity(apiDataModel);
-        return entity;
-    }
 
     public async Task Merge()
     {
@@ -82,9 +74,10 @@ public class ProductSyncService : IProductSyncService
                 await Update(model);
             }
         }
+
         if (_settings.DeleteProduct)
         {
-            await Delete();
+            await DeleteUnmatched();
         }
     }
 
@@ -96,16 +89,16 @@ public class ProductSyncService : IProductSyncService
         model.Tags.Add($"infigo_product_{model.Id}");
         var tags = model.Tags.ToArray();
         await _productTagService.UpdateProductTagsAsync(entity, tags);
-        
+
         //upload images
         foreach (var thumbnail in model.ThumbnailUrls)
         {
-            var productPicture = await GetProductPicture(thumbnail, entity.Id);
-            await _productService.InsertProductPictureAsync(productPicture);
+            await InsertProductPicture(thumbnail, entity.Id);
         }
+
         //Insert attributes
         var attributes = await GetByIdProductAttributes(model.Id);
-        await UpdateOrCreateProductAttributes(attributes,entity.Id);
+        await UpdateOrCreateProductAttributes(attributes, entity.Id);
     }
 
     public async Task Update(ApiDataModel model)
@@ -124,22 +117,23 @@ public class ProductSyncService : IProductSyncService
             {
                 foreach (var thumbnail in model.ThumbnailUrls)
                 {
-                    var productPicture = await GetProductPicture(thumbnail, product.Id);
-                    await _productService.UpdateProductPictureAsync(productPicture);
+                    await InsertProductPicture(thumbnail, product.Id);
                 }
             }
+
             var attributes = await GetByIdProductAttributes(model.Id);
             if (!attributes.IsNullOrEmpty())
             {
-                await UpdateOrCreateProductAttributes(attributes,updatedProduct.Id);
+                await UpdateOrCreateProductAttributes(attributes, updatedProduct.Id);
             }
         }
     }
 
-    public async Task Delete()
+    public async Task DeleteUnmatched()
     {
         var infigoProductsTags = await _productTagService.GetAllProductTagsAsync($"infigo_product");
-        var infigoDbProductsIds = await infigoProductsTags.Select(x => Int32.Parse(Regex.Match(x.Name, @"\d+").Value)).ToListAsync();
+        var infigoDbProductsIds = await infigoProductsTags.Select(x => Int32.Parse(Regex.Match(x.Name, @"\d+").Value))
+            .ToListAsync();
         var infigoApiProductsIds = await _infigoClient.GetIds();
 
         var idsToDelete = infigoDbProductsIds.Except(infigoApiProductsIds);
@@ -151,19 +145,6 @@ public class ProductSyncService : IProductSyncService
         }
     }
 
-    private async Task<byte[]> GetByteDataFromUrl(string url)
-    {
-        var client = new HttpClient();
-        
-        var result = await client.GetAsync(url);
-        var content = result.Content;
-
-        var memoryStream= new MemoryStream();
-        await content.CopyToAsync(memoryStream);
-
-        return memoryStream.ToArray();
-    }
-
     #endregion
 
     #region Utilities
@@ -172,13 +153,9 @@ public class ProductSyncService : IProductSyncService
 
     private ProductAttribute MapAttribute(ApiProductAttributeModel apiModel)
     {
-        return new ProductAttribute()
-        {
-            Description = apiModel.Description,
-            Name = apiModel.Name
-        };
+        return new ProductAttribute() { Description = apiModel.Description, Name = apiModel.Name };
     }
-    
+
     private Product MapToProductEntity(ApiDataModel model)
     {
         var entity = new Product()
@@ -190,8 +167,6 @@ public class ProductSyncService : IProductSyncService
             ShortDescription = model.ShortDescription,
             FullDescription = model.LongDescription,
             Sku = model.Sku,
-            CreatedOnUtc = DateTime.UtcNow,
-            UpdatedOnUtc = DateTime.UtcNow,
             Published = true
         };
         return entity;
@@ -201,139 +176,77 @@ public class ProductSyncService : IProductSyncService
 
     #region Others
 
-    public async Task UpdateOrCreateProductAttributes(List<ApiProductAttributeModel> attributes,int productId=0)
+    public async Task InsertProductAttributeValues(int productId, int productAttributeId,
+        ApiProductAttributeModel attribute)
+    {
+        var productAttributeMapping =
+            await _productSyncFactory.PrepareProductAttributeMapping(productId, productAttributeId, attribute);
+        await _productAttributeService.InsertProductAttributeMappingAsync(productAttributeMapping);
+        foreach (var value in attribute.ProductAttributeValues)
+        {
+            var productAttributeValue =
+                await _productSyncFactory.PrepareProductAttributeValue(productAttributeMapping.Id, value);
+            await _productAttributeService.InsertProductAttributeValueAsync(productAttributeValue);
+        }
+    }
+
+    public async Task UpdateOrCreateProductAttributes(List<ApiProductAttributeModel> attributes, int productId = 0)
     {
         foreach (var attribute in attributes)
         {
             var productAttribute = await _productAttributeService.GetProductAttributeByNameAsync(attribute.Name);
             if (productAttribute is null)
             {
-                var entity = MapAttribute(attribute);
-                await _productAttributeService.InsertProductAttributeAsync(entity);
-                if (!attribute.ProductAttributeValues.IsNullOrEmpty())
-                {
-                    var productAttributeMapping = new ProductAttributeMapping()
-                    {
-                        AttributeControlTypeId = attribute.AttributeControlType,
-                        IsRequired = attribute.IsRequired,
-                        ProductId = productId,
-                        ProductAttributeId = entity.Id
-                    };
-                    await _productAttributeService.InsertProductAttributeMappingAsync(productAttributeMapping);
-                    foreach (var value in attribute.ProductAttributeValues)
-                    {
-                        var productAttributeValue = new ProductAttributeValue()
-                        {
-                            ProductAttributeMappingId = productAttributeMapping.Id,
-                            Name = value.Name,
-                            PriceAdjustment = value.PriceAdjustment,
-                            IsPreSelected = value.IsPreSelected,
-                            DisplayOrder = value.DisplayOrder,
-                            AttributeValueType = AttributeValueType.Simple,
-                            WeightAdjustment = value.WeightAdjustment,
-                        };
-                        await _productAttributeService.InsertProductAttributeValueAsync(productAttributeValue);
-                    }
-                }
+                productAttribute = MapAttribute(attribute);
+                await _productAttributeService.InsertProductAttributeAsync(productAttribute);
             }
             else
             {
                 await _productAttributeService.UpdateProductAttributeAsync(productAttribute);
-                if (!attribute.ProductAttributeValues.IsNullOrEmpty())
-                {
-                    var productAttributeMappings = await _productAttributeService.GetProductAttributeMappingsByProductIdAsync(productId);
-
-                    if (!productAttributeMappings.IsNullOrEmpty())
-                    {
-                        var productAttributeMapping =
-                            productAttributeMappings.FirstOrDefault(x => x.ProductAttributeId == productAttribute.Id);
-                        if (productAttributeMapping != null)
-                        {
-                            productAttributeMapping.AttributeControlTypeId = attribute.AttributeControlType;
-                            productAttributeMapping.IsRequired = attribute.IsRequired;
-                            productAttributeMapping.ProductId = productId;
-                            productAttributeMapping.ProductAttributeId = productAttribute.Id;
-
-                            await _productAttributeService.UpdateProductAttributeMappingAsync(productAttributeMapping);
-                            var attributeValues =
-                                await _productAttributeService.GetProductAttributeValuesAsync(productId);
-                            foreach (var value in attribute.ProductAttributeValues)
-                            {
-                                var valueEntity = attributeValues.FirstOrDefault(x => x.Name == value.Name);
-                                if (valueEntity != null)
-                                {
-                                    valueEntity.ProductAttributeMappingId = productAttributeMapping.Id;
-                                    valueEntity.Name = value.Name;
-                                    valueEntity.PriceAdjustment = value.PriceAdjustment;
-                                    valueEntity.IsPreSelected = value.IsPreSelected;
-                                    valueEntity.DisplayOrder = 1;
-                                    valueEntity.WeightAdjustment = value.WeightAdjustment;
-                                    valueEntity.AttributeValueType = AttributeValueType.Simple;
-
-                                    await _productAttributeService.UpdateProductAttributeValueAsync(valueEntity);
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        var productAttributeMapping = new ProductAttributeMapping()
-                        {
-                            AttributeControlTypeId = attribute.AttributeControlType,
-                            IsRequired = attribute.IsRequired,
-                            ProductId = productId,
-                            ProductAttributeId = productAttribute.Id
-                        };
-                        await _productAttributeService.InsertProductAttributeMappingAsync(productAttributeMapping);
-                        foreach (var value in attribute.ProductAttributeValues)
-                        {
-                            var productAttributeValue = new ProductAttributeValue()
-                            {
-                                ProductAttributeMappingId = productAttributeMapping.Id,
-                                Name = value.Name,
-                                PriceAdjustment = value.PriceAdjustment,
-                                IsPreSelected = value.IsPreSelected,
-                                DisplayOrder = 1,
-                                AttributeValueType = AttributeValueType.Simple,
-                                WeightAdjustment = value.WeightAdjustment,
-                            };
-                            await _productAttributeService.InsertProductAttributeValueAsync(productAttributeValue);
-                        }
-                    }
-                }
+            }
+            var productAttributeMapping =
+                await _productAttributeService.GetProductAttributeMappingAsync(productId, productAttribute.Id);
+            if (productAttributeMapping is not null)
+            {
+                await _productAttributeService.DeleteProductAttributeMappingAsync(productAttributeMapping);
+            }
+            if (!attribute.ProductAttributeValues.IsNullOrEmpty())
+            {
+                await InsertProductAttributeValues(productId, productAttribute.Id, attribute);
             }
         }
     }
-    
-    public async Task<ProductPicture> GetProductPicture(string thumbnail, int productId)
+
+    public async Task InsertProductPicture(string thumbnail, int productId)
     {
-        var fileExtention = Path.GetExtension(Path.GetFileName(thumbnail))?.Remove(0,1);
+        var fileExtention = Path.GetExtension(Path.GetFileName(thumbnail))?.Remove(0, 1);
         var mimeType = $"image/{fileExtention}";
-        var byteData = await GetByteDataFromUrl(thumbnail);
+        var byteData = await PluginHelpers.GetByteDataFromUrl(thumbnail);
         var filename = Path.GetFileNameWithoutExtension(thumbnail);
         var picture = await _pictureService.InsertPictureAsync(byteData, mimeType, filename);
-        return new ProductPicture() { PictureId = picture.Id, ProductId = productId };
+        await _productService.InsertProductPictureAsync(new ProductPicture()
+        {
+            PictureId = picture.Id, ProductId = productId
+        });
     }
 
     public async Task<Product> GetProductByInfigoId(int id)
     {
         var tagName = $"infigo_product_{id}";
-        var tags = await _productTagService.GetAllProductTagsAsync(tagName);
-        if (!tags.IsNullOrEmpty())
-        {
-            var first = tags?.First();
-            var productProductTagMappings = await _productProductTagMapping.Table.FirstOrDefaultAsync(x=>x.ProductTagId==first.Id);
-            var product = await _productService.GetProductByIdAsync(productProductTagMappings.ProductId);
-            return product;
-        }
-
-        return null;
+        return await _productService.GetByTag(tagName);
     }
-    
+
     public async Task<List<ApiProductAttributeModel>> GetByIdProductAttributes(int apiDataModelId)
     {
         var apiDataModel = await _infigoClient.GetById(apiDataModelId);
         return apiDataModel.ProductAttributes;
+    }
+    
+    public async Task<Product> GetByIdProductEntity(int apiDataModelId)
+    {
+        var apiDataModel = await _infigoClient.GetById(apiDataModelId);
+        var entity = MapToProductEntity(apiDataModel);
+        return entity;
     }
 
     #endregion

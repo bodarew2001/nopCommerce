@@ -11,5 +11,6 @@ public class ConfigurationModelValidator:BaseNopValidator<ConfigurationModel>
     public ConfigurationModelValidator()
     {
         RuleFor(x => x.InfigoUrl).Must((url)=>Uri.IsWellFormedUriString(url,UriKind.Absolute));
+        RuleFor(x => x.ApiToken).NotNull();
     }
 }

@@ -208,6 +208,18 @@ namespace Nop.Services.Catalog
             return attributes;
         }
 
+        public async Task<IList<ProductAttributeMapping>> GetProductAttributeMappingsByAttributeIdAsync(int attributeId)
+        {
+            var attributes = await _productAttributeMappingRepository.Table.Where(x => x.ProductAttributeId == attributeId).ToListAsync();
+            return attributes;
+        }
+
+        public async Task<ProductAttributeMapping> GetProductAttributeMappingAsync(int productId, int attributeId)
+        {
+           return await _productAttributeMappingRepository.Table.FirstOrDefaultAsync(x =>
+                x.ProductAttributeId == attributeId && x.ProductId == productId);
+        }
+
         /// <summary>
         /// Gets a product attribute mapping
         /// </summary>

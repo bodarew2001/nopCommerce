@@ -437,6 +437,8 @@ namespace Nop.Services.Catalog
         /// </returns>
         Task<string[]> GetNotExistingProductsAsync(string[] productSku);
 
+        Task<Product> GetByTag(string tag);
+
         #endregion
 
         #region Inventory management methods

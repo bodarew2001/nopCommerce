@@ -111,6 +111,25 @@ namespace Nop.Services.Catalog
         /// The task result contains the product attribute mapping collection
         /// </returns>
         Task<IList<ProductAttributeMapping>> GetProductAttributeMappingsByProductIdAsync(int productId);
+        
+        /// <summary>
+        /// Gets product attribute mappings by attribute identifier
+        /// </summary>
+        /// <param name="attributeId">The attribute identifier</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the product attribute mapping collection
+        Task<IList<ProductAttributeMapping>> GetProductAttributeMappingsByAttributeIdAsync(int attributeId);
+
+        /// <summary>
+        /// Gets product attribute mapping by attribute and product identifiers
+        /// </summary>
+        /// <param name="productId">The product identifier</param>
+        /// <param name="attributeId">The attribute identifier</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the product attribute mapping collection
+        Task<ProductAttributeMapping> GetProductAttributeMappingAsync(int productId, int attributeId);
 
         /// <summary>
         /// Gets a product attribute mapping
