@@ -54,7 +54,7 @@ public class ProductSyncService : IProductSyncService
 
     public async Task<List<Product>> GetAllProducts()
     {
-        var models = await _infigoClient.GetListAsync();
+        var models = await _infigoClient.GetList();
         var entities = await models.Select(x => MapToProductEntity(x)).ToListAsync();
 
         return entities;
@@ -62,14 +62,14 @@ public class ProductSyncService : IProductSyncService
 
     public async Task<Product> GetByIdProductEntity(int apiDataModelId)
     {
-        var apiDataModel = await _infigoClient.GetByIdAsync(apiDataModelId);
+        var apiDataModel = await _infigoClient.GetById(apiDataModelId);
         var entity = MapToProductEntity(apiDataModel);
         return entity;
     }
 
     public async Task Merge()
     {
-        var apiModels = await _infigoClient.GetListAsync();
+        var apiModels = await _infigoClient.GetList();
         foreach (var model in apiModels)
         {
             var dbProduct = await GetProductByInfigoId(model.Id);
@@ -140,7 +140,7 @@ public class ProductSyncService : IProductSyncService
     {
         var infigoProductsTags = await _productTagService.GetAllProductTagsAsync($"infigo_product");
         var infigoDbProductsIds = await infigoProductsTags.Select(x => Int32.Parse(Regex.Match(x.Name, @"\d+").Value)).ToListAsync();
-        var infigoApiProductsIds = await _infigoClient.GetIdsAsync();
+        var infigoApiProductsIds = await _infigoClient.GetIds();
 
         var idsToDelete = infigoDbProductsIds.Except(infigoApiProductsIds);
 
@@ -332,7 +332,7 @@ public class ProductSyncService : IProductSyncService
     
     public async Task<List<ApiProductAttributeModel>> GetByIdProductAttributes(int apiDataModelId)
     {
-        var apiDataModel = await _infigoClient.GetByIdAsync(apiDataModelId);
+        var apiDataModel = await _infigoClient.GetById(apiDataModelId);
         return apiDataModel.ProductAttributes;
     }
 

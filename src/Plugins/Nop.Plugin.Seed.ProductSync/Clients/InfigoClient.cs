@@ -28,15 +28,15 @@ public class InfigoClient:IInfigoClient
         }
     }
 
-    public async Task<List<ApiDataModel>> GetListAsync()
+    public async Task<List<ApiDataModel>> GetList()
     {
         if (InfigoClient.IsConfigured(_settings))
         {
-            var ids = await GetIdsAsync();
+            var ids = await GetIds();
             var dataModels = new List<ApiDataModel>();
             foreach (var id in ids)
             {
-                var model = await GetByIdAsync(id);
+                var model = await GetById(id);
                 dataModels.Add(model);
             }
 
@@ -46,7 +46,7 @@ public class InfigoClient:IInfigoClient
         return null;
     }
 
-    public async Task<List<int>> GetIdsAsync()
+    public async Task<List<int>> GetIds()
     {
         if (InfigoClient.IsConfigured(_settings))
         {
@@ -59,7 +59,7 @@ public class InfigoClient:IInfigoClient
         return null;
     }
 
-    public async Task<ApiDataModel> GetByIdAsync(int id)
+    public async Task<ApiDataModel> GetById(int id)
     {
         if (InfigoClient.IsConfigured(_settings))
         {

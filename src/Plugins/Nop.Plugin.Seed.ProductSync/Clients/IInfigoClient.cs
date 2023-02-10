@@ -6,7 +6,7 @@ namespace Nop.Plugin.Seed.ProductSync.Clients;
 
 public interface IInfigoClient
 {
-    Task<List<ApiDataModel>> GetListAsync();
-    Task<List<int>> GetIdsAsync();
-    Task<ApiDataModel> GetByIdAsync(int id);
+    Task<List<ApiDataModel>> GetList();
+    Task<List<int>> GetIds();
+    Task<ApiDataModel> GetById(int id);
 }
