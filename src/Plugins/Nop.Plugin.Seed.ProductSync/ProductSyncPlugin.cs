@@ -50,7 +50,7 @@ public class ProductSyncPlugin:BasePlugin
     public override async Task UninstallAsync()
     {
         await _settingService.DeleteSettingAsync<ProductSyncSettings>();
-        var task = await _scheduleTaskService.GetTaskByTypeAsync("Nop.Plugin.Seed.ProductSync.Tasks.MergeTask, Nop.Plugin");
+        var task = await _scheduleTaskService.GetTaskByTypeAsync("Nop.Plugin.Seed.ProductSync.Tasks.MergeTask");
         await _scheduleTaskService.DeleteTaskAsync(task);
         await base.InstallAsync();
     }
