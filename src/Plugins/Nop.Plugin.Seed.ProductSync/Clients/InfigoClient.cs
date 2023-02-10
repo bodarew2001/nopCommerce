@@ -17,11 +17,15 @@ public class InfigoClient:IInfigoClient
     public InfigoClient(ProductSyncSettings settings)
     {
         _settings = settings;
-        var options = new RestClientOptions($"{_settings.InfigoUrl}")
+        if(InfigoClient.IsConfigured(_settings))
         {
-            Authenticator = new HttpBasicAuthenticator(_settings.ApiToken,"")
-        };
-        _client = new RestClient(options);
+            
+            var options = new RestClientOptions($"{_settings.InfigoUrl}")
+            {
+                Authenticator = new HttpBasicAuthenticator(_settings.ApiToken,"")
+            };
+            _client = new RestClient(options);
+        }
     }
 
     public async Task<List<ApiDataModel>> GetListAsync()

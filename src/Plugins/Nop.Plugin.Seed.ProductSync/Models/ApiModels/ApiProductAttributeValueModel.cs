@@ -3,7 +3,7 @@
 public class ApiProductAttributeValueModel
 {
     public int Id { get; set; }
-    public string Name {get;set;}
+    public string Name { get; set; }
     public string FriendlyName { get; set; }
     public string HtmlInfo { get; set; }
     public int DisplayOrder { get; set; }

@@ -36,10 +36,8 @@ public class SeedProductSyncController : BasePluginController
 
     public async Task<IActionResult> Configure()
     {
-        await _productSyncService.Merge();
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePaymentMethods))
             return AccessDeniedView();
-        var result = await _productSyncService.GetByIdProductEntity(1180);
         var productSyncSettings = await _settingService.LoadSettingAsync<ProductSyncSettings>();
         var model = new ConfigurationModel()
         {

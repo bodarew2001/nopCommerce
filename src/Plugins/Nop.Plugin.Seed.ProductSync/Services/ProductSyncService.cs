@@ -1,30 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Linq.Dynamic.Core;
-using System.Net;
 using System.Net.Http;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.IdentityModel.Tokens;
 using Nop.Core.Domain.Catalog;
-using Nop.Core.Domain.Tax;
 using Nop.Data;
 using Nop.Plugin.Seed.ProductSync.Clients;
-using Nop.Plugin.Seed.ProductSync.Models;
 using Nop.Plugin.Seed.ProductSync.Models.ApiModels;
 using Nop.Services.Catalog;
 using Nop.Services.Media;
 using Nop.Services.Security;
-using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
-using Nop.Web.Areas.Admin.Models.Catalog;
-using RestSharp;
-using RestSharp.Authenticators;
 
 namespace Nop.Plugin.Seed.ProductSync.Services;
 
@@ -100,19 +88,10 @@ public class ProductSyncService : IProductSyncService
         return entity;
     }
 
-    public async Task<List<ProductAttribute>> GetByIdProductAttributes(int apiDataModelId)
+    public async Task<List<ApiProductAttributeModel>> GetByIdProductAttributes(int apiDataModelId)
     {
         var apiDataModel = await _infigoClient.GetByIdAsync(apiDataModelId);
-        var productAttributes = new List<ProductAttribute>();
-        foreach (var attribute in apiDataModel.ProductAttributes)
-        {
-            productAttributes.Add(new ProductAttribute()
-            {
-                Name = attribute.Name, Description = attribute.Description
-            });
-        }
-
-        return productAttributes;
+        return apiDataModel.ProductAttributes;
     }
 
     public async Task Merge()
@@ -129,11 +108,10 @@ public class ProductSyncService : IProductSyncService
             {
                 await Update(model);
             }
-
-            if (_settings.DeleteProduct)
-            {
-                await Delete(model);
-            }
+        }
+        if (_settings.DeleteProduct)
+        {
+            await Delete();
         }
     }
 
@@ -154,7 +132,7 @@ public class ProductSyncService : IProductSyncService
         }
         //Insert attributes
         var attributes = await GetByIdProductAttributes(model.Id);
-        await UpdateOrCreateProductAttributes(attributes);
+        await UpdateOrCreateProductAttributes(attributes,entity.Id);
     }
 
     public async Task Update(ApiDataModel model)
@@ -179,11 +157,14 @@ public class ProductSyncService : IProductSyncService
                 }
             }
             var attributes = await GetByIdProductAttributes(model.Id);
-            await UpdateOrCreateProductAttributes(attributes);
+            if (!attributes.IsNullOrEmpty())
+            {
+                await UpdateOrCreateProductAttributes(attributes,updatedProduct.Id);
+            }
         }
     }
 
-    public async Task Delete(ApiDataModel model)
+    public async Task Delete()
     {
         var infigoProductsTags = await _productTagService.GetAllProductTagsAsync($"infigo_product");
         var infigoDbProductsIds = await infigoProductsTags.Select(x => Int32.Parse(Regex.Match(x.Name, @"\d+").Value)).ToListAsync();
@@ -193,7 +174,7 @@ public class ProductSyncService : IProductSyncService
 
         foreach (var id in idsToDelete)
         {
-            var product = await GetProductByInfigoId(model.Id);
+            var product = await GetProductByInfigoId(id);
             await _productService.DeleteProductAsync(product);
         }
     }
@@ -201,12 +182,11 @@ public class ProductSyncService : IProductSyncService
     private async Task<byte[]> GetByteDataFromUrl(string url)
     {
         var client = new HttpClient();
+        
         var result = await client.GetAsync(url);
-
         var content = result.Content;
 
         var memoryStream= new MemoryStream();
-
         await content.CopyToAsync(memoryStream);
 
         return memoryStream.ToArray();
@@ -235,18 +215,107 @@ public class ProductSyncService : IProductSyncService
         return new ProductPicture() { PictureId = picture.Id, ProductId = productId };
     }
 
-    public async Task UpdateOrCreateProductAttributes(List<ProductAttribute> attributes)
+    public async Task UpdateOrCreateProductAttributes(List<ApiProductAttributeModel> attributes,int productId=0)
     {
         foreach (var attribute in attributes)
         {
             var productAttribute = await _productAttributeService.GetProductAttributeByNameAsync(attribute.Name);
             if (productAttribute is null)
             {
-                await _productAttributeService.InsertProductAttributeAsync(attribute);
+                var entity = MapAttribute(attribute);
+                await _productAttributeService.InsertProductAttributeAsync(entity);
+                if (!attribute.ProductAttributeValues.IsNullOrEmpty())
+                {
+                    var productAttributeMapping = new ProductAttributeMapping()
+                    {
+                        AttributeControlTypeId = attribute.AttributeControlType,
+                        IsRequired = attribute.IsRequired,
+                        ProductId = productId,
+                        ProductAttributeId = entity.Id
+                    };
+                    await _productAttributeService.InsertProductAttributeMappingAsync(productAttributeMapping);
+                    foreach (var value in attribute.ProductAttributeValues)
+                    {
+                        var productAttributeValue = new ProductAttributeValue()
+                        {
+                            ProductAttributeMappingId = productAttributeMapping.Id,
+                            Name = value.Name,
+                            PriceAdjustment = value.PriceAdjustment,
+                            IsPreSelected = value.IsPreSelected,
+                            DisplayOrder = value.DisplayOrder,
+                            AttributeValueType = AttributeValueType.Simple,
+                            WeightAdjustment = value.WeightAdjustment,
+                        };
+                        await _productAttributeService.InsertProductAttributeValueAsync(productAttributeValue);
+                    }
+                }
             }
             else
             {
-                await _productAttributeService.UpdateProductAttributeAsync(attribute);
+                var entity = await _productAttributeService.GetProductAttributeByNameAsync(attribute.Name);
+                await _productAttributeService.UpdateProductAttributeAsync(entity);
+                if (!attribute.ProductAttributeValues.IsNullOrEmpty())
+                {
+                    var productAttributeMappings = await _productAttributeService.GetProductAttributeMappingsByProductIdAsync(productId);
+
+                    if (!productAttributeMappings.IsNullOrEmpty())
+                    {
+                        var productAttributeMapping =
+                            productAttributeMappings.FirstOrDefault(x => x.ProductAttributeId == entity.Id);
+                        if (productAttributeMapping != null)
+                        {
+                            productAttributeMapping.AttributeControlTypeId = attribute.AttributeControlType;
+                            productAttributeMapping.IsRequired = attribute.IsRequired;
+                            productAttributeMapping.ProductId = productId;
+                            productAttributeMapping.ProductAttributeId = entity.Id;
+
+                            await _productAttributeService.UpdateProductAttributeMappingAsync(productAttributeMapping);
+                            var attributeValues =
+                                await _productAttributeService.GetProductAttributeValuesAsync(productId);
+                            foreach (var value in attribute.ProductAttributeValues)
+                            {
+                                var valueEntity = attributeValues.FirstOrDefault(x => x.Name == value.Name);
+                                if (valueEntity != null)
+                                {
+                                    valueEntity.ProductAttributeMappingId = productAttributeMapping.Id;
+                                    valueEntity.Name = value.Name;
+                                    valueEntity.PriceAdjustment = value.PriceAdjustment;
+                                    valueEntity.IsPreSelected = value.IsPreSelected;
+                                    valueEntity.DisplayOrder = value.DisplayOrder;
+                                    valueEntity.WeightAdjustment = value.WeightAdjustment;
+                                    valueEntity.AttributeValueType = AttributeValueType.Simple;
+
+                                    await _productAttributeService.UpdateProductAttributeValueAsync(valueEntity);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var productAttributeMapping = new ProductAttributeMapping()
+                        {
+                            AttributeControlTypeId = attribute.AttributeControlType,
+                            IsRequired = attribute.IsRequired,
+                            ProductId = productId,
+                            ProductAttributeId = entity.Id
+                        };
+                        await _productAttributeService.InsertProductAttributeMappingAsync(productAttributeMapping);
+                        foreach (var value in attribute.ProductAttributeValues)
+                        {
+                            var productAttributeValue = new ProductAttributeValue()
+                            {
+                                ProductAttributeMappingId = productAttributeMapping.Id,
+                                Name = value.Name,
+                                PriceAdjustment = value.PriceAdjustment,
+                                IsPreSelected = value.IsPreSelected,
+                                DisplayOrder = 1,
+                                AttributeValueType = AttributeValueType.Simple,
+                                WeightAdjustment = value.WeightAdjustment,
+                            };
+                            await _productAttributeService.InsertProductAttributeValueAsync(productAttributeValue);
+                        }
+                    }
+                }
             }
         }
     }
@@ -257,5 +326,14 @@ public class ProductSyncService : IProductSyncService
         var product = await GetProductByTagName(tagName);
 
         return product;
+    }
+
+    private ProductAttribute MapAttribute(ApiProductAttributeModel apiModel)
+    {
+        return new ProductAttribute()
+        {
+            Description = apiModel.Description,
+            Name = apiModel.Name
+        };
     }
 }
