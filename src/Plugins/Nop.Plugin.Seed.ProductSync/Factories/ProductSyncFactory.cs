@@ -29,6 +29,7 @@ public class ProductSyncFactory:IProductSyncFactory
         valueEntity.DisplayOrder = value.DisplayOrder;
         valueEntity.AttributeValueType = AttributeValueType.Simple;
         valueEntity.WeightAdjustment = value.WeightAdjustment;
+        
         return valueEntity;
     }
 }
