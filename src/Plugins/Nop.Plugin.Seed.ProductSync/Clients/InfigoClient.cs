@@ -16,13 +16,14 @@ public class InfigoClient : IInfigoClient
     public InfigoClient(ProductSyncSettings settings)
     {
         _settings = settings;
-        EnsureConfigured();
-        
-        var options = new RestClientOptions($"{_settings.InfigoUrl}")
+        if (IsConfigured())
         {
-            Authenticator = new HttpBasicAuthenticator(_settings.ApiToken, "")
-        };
-        _client = new RestClient(options);
+            var options = new RestClientOptions($"{_settings.InfigoUrl}")
+            {
+                Authenticator = new HttpBasicAuthenticator(_settings.ApiToken, "")
+            };
+            _client = new RestClient(options);
+        }
     }
 
     public async Task<List<ApiDataModel>> GetList()
@@ -47,7 +48,7 @@ public class InfigoClient : IInfigoClient
 
     public async Task<List<int>> GetIds()
     {
-        EnsureConfigured();
+        EnsureCreated();
         
         var request = new RestRequest($"Services/api/Catalog/ProductList");
         var response = await _client.ExecuteAsync(request);
@@ -58,7 +59,7 @@ public class InfigoClient : IInfigoClient
 
     public async Task<ApiDataModel> GetById(int id)
     {
-        EnsureConfigured();
+        EnsureCreated();
 
         var request = new RestRequest($"Services/api/Catalog/ProductDetails/{id}");
         var response = await _client.ExecuteAsync(request);
@@ -72,7 +73,7 @@ public class InfigoClient : IInfigoClient
         return !string.IsNullOrEmpty(_settings?.InfigoUrl) && !string.IsNullOrEmpty(_settings?.ApiToken);
     }
 
-    public void EnsureConfigured()
+    public void EnsureCreated()
     {
         if (!IsConfigured())
         {
