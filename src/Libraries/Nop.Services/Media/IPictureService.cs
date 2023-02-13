@@ -202,6 +202,7 @@ namespace Nop.Services.Media
         /// The task result contains the picture
         /// </returns>
         Task<Picture> UpdatePictureAsync(Picture picture);
+        
 
         /// <summary>
         /// Updates a SEO filename of a picture
@@ -274,5 +275,7 @@ namespace Nop.Services.Media
         /// <param name="fileExtension">The file extension</param>
         /// <returns>Picture's content type</returns>
         string GetPictureContentTypeByFileExtension(string fileExtension);
+
+        Task<List<Picture>> FindPictureByFileName(string fileName);
     }
 }

@@ -1,6 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿using System.IO;
+using System.Threading.Tasks;
 using Nop.Core.Domain.Catalog;
+using Nop.Plugin.Seed.ProductSync.Models;
 using Nop.Plugin.Seed.ProductSync.Models.ApiModels;
+using Nop.Plugin.Seed.ProductSync.Services.Helpers;
 
 namespace Nop.Plugin.Seed.ProductSync.Factories;
 
@@ -31,5 +34,18 @@ public class ProductSyncFactory:IProductSyncFactory
         valueEntity.WeightAdjustment = value.WeightAdjustment;
         
         return valueEntity;
+    }
+
+    public async Task<PictureModel> PreparePictureModel(string thumbnail)
+    {
+        var fileExtention = Path.GetExtension(Path.GetFileName(thumbnail))?.Remove(0, 1);
+        var mimeType = $"image/{fileExtention}";
+        var byteData = await PluginHelpers.GetByteDataFromUrl(thumbnail);
+        var filename = Path.GetFileNameWithoutExtension(thumbnail);
+
+        return new PictureModel()
+        {
+            FileExtention = fileExtention, MimeType = mimeType, ByteData = byteData, FileName = filename
+        };
     }
 }

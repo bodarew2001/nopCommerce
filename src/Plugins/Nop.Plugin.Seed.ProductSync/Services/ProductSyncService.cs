@@ -12,6 +12,7 @@ using Nop.Core.Domain.Media;
 using Nop.Data;
 using Nop.Plugin.Seed.ProductSync.Clients;
 using Nop.Plugin.Seed.ProductSync.Factories;
+using Nop.Plugin.Seed.ProductSync.Models;
 using Nop.Plugin.Seed.ProductSync.Models.ApiModels;
 using Nop.Plugin.Seed.ProductSync.Services.Helpers;
 using Nop.Services.Catalog;
@@ -115,6 +116,11 @@ public class ProductSyncService : IProductSyncService
             await _productService.UpdateProductAsync(updatedProduct);
             if (_settings.SyncImages)
             {
+                var productPictures = await _productService.GetProductPicturesByProductIdAsync(product.Id);
+                foreach (var productPicture in productPictures)
+                {
+                    await _productService.DeleteProductPictureAsync(productPicture);
+                }
                 foreach (var thumbnail in model.ThumbnailUrls)
                 {
                     await InsertProductPicture(thumbnail, product.Id);
@@ -204,12 +210,14 @@ public class ProductSyncService : IProductSyncService
             {
                 await _productAttributeService.UpdateProductAttributeAsync(productAttribute);
             }
+
             var productAttributeMapping =
                 await _productAttributeService.GetProductAttributeMappingAsync(productId, productAttribute.Id);
             if (productAttributeMapping is not null)
             {
                 await _productAttributeService.DeleteProductAttributeMappingAsync(productAttributeMapping);
             }
+
             if (!attribute.ProductAttributeValues.IsNullOrEmpty())
             {
                 await InsertProductAttributeValues(productId, productAttribute.Id, attribute);
@@ -219,15 +227,23 @@ public class ProductSyncService : IProductSyncService
 
     public async Task InsertProductPicture(string thumbnail, int productId)
     {
-        var fileExtention = Path.GetExtension(Path.GetFileName(thumbnail))?.Remove(0, 1);
-        var mimeType = $"image/{fileExtention}";
-        var byteData = await PluginHelpers.GetByteDataFromUrl(thumbnail);
-        var filename = Path.GetFileNameWithoutExtension(thumbnail);
-        var picture = await _pictureService.InsertPictureAsync(byteData, mimeType, filename);
+        var model = await _productSyncFactory.PreparePictureModel(thumbnail);
+
+        var picturesByName = await _pictureService.FindPictureByFileName(model.FileName);
+
+        Picture picture = picturesByName.IsNullOrEmpty()
+            ? await _pictureService.InsertPictureAsync(model.ByteData, model.MimeType, model.FileName)
+            : picturesByName.First();
+        
         await _productService.InsertProductPictureAsync(new ProductPicture()
         {
             PictureId = picture.Id, ProductId = productId
         });
+    }
+
+    public async Task UpdateProductPicture(int pictureId, PictureModel model)
+    {
+        await _pictureService.UpdatePictureAsync(pictureId, model.ByteData, model.MimeType, model.FileName);
     }
 
     public async Task<Product> GetProductByInfigoId(int id)
@@ -242,7 +258,7 @@ public class ProductSyncService : IProductSyncService
         var apiDataModel = await _infigoClient.GetById(apiDataModelId);
         return apiDataModel.ProductAttributes;
     }
-    
+
     public async Task<Product> GetByIdProductEntity(int apiDataModelId)
     {
         var apiDataModel = await _infigoClient.GetById(apiDataModelId);
