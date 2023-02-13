@@ -1767,15 +1767,18 @@ namespace Nop.Services.Catalog
             return queryFilter.Except(filter).ToArray();
         }
 
-        public async Task<Product> GetByTag(string tag)
+        public async Task<List<Product>> GetByTag(string tag)
         {
             var tagEntity = await _productTagRepository.Table.FirstOrDefaultAsync(x => x.Name == tag);
             if (tagEntity is null)
             {
                 throw new ArgumentException($"Can not find {tag} tag");
             }
-            var productId = _productTagMappingRepository.Table.FirstOrDefault(x => x.ProductTagId == tagEntity.Id)?.ProductId;
-            return productId == null ? null : await GetProductByIdAsync(Convert.ToInt32(productId));
+            var productIds = _productTagMappingRepository
+                .Table
+                .Where(x => x.ProductTagId == tagEntity.Id)?
+                .Select(x=>x.ProductId);
+            return await _productRepository.Table.Where(x => productIds.Contains(x.Id)).ToListAsync();
         }
 
         #endregion

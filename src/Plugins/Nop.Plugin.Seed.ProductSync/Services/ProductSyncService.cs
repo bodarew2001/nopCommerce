@@ -233,7 +233,8 @@ public class ProductSyncService : IProductSyncService
     public async Task<Product> GetProductByInfigoId(int id)
     {
         var tagName = $"infigo_product_{id}";
-        return await _productService.GetByTag(tagName);
+        var productsByTag = await _productService.GetByTag(tagName);
+        return productsByTag.FirstOrDefault();
     }
 
     public async Task<List<ApiProductAttributeModel>> GetByIdProductAttributes(int apiDataModelId)
