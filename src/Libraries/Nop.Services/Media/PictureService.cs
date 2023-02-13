@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading;
 using System.Threading.Tasks;
+using LinqToDB;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.StaticFiles;
 using Nop.Core;
@@ -406,7 +408,6 @@ namespace Nop.Services.Media
             }
 
         }
-
         #endregion
 
         #region Getting picture local path/URL methods
@@ -1243,6 +1244,36 @@ namespace Nop.Services.Media
 
             return contentType;
         }
+
+        public async Task<List<Picture>> FindPictureByFileName(string fileName)
+        {
+            return await _pictureRepository.Table.Where(x => x.SeoFilename == fileName).ToListAsync();
+        }
+
+        public async Task<Picture> FindPictureByByteData(byte[] data)
+        {
+            var pics = _pictureRepository.Table;
+
+            foreach (var pic in pics)
+            {
+                var filePath = await GetThumbLocalPathAsync(pic.SeoFilename);
+                var fileExtention = await GetFileExtensionFromMimeTypeAsync(pic.MimeType);
+                var fileName = Path.GetFileName(filePath);
+                var fullPath = filePath.Replace(fileName, $"{pic.Id:0000000}_" + fileName+$".{fileExtention}");
+                if (File.Exists(fullPath))
+                {
+                    var pictureBytes = await File.ReadAllBytesAsync(fullPath);
+                    if (pictureBytes.SequenceEqual(data))
+                    {
+                        return pic;
+                    }
+                }
+            }
+
+            return null;
+        }
+        
+        
 
         #endregion
     }

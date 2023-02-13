@@ -22,7 +22,6 @@ namespace Nop.Plugin.MultiFactorAuth.GoogleAuthenticator.Services
         private readonly GoogleAuthenticatorSettings _googleAuthenticatorSettings;
         private TwoFactorAuthenticator _twoFactorAuthenticator;
         
-
         #endregion
 
         #region Ctr

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Caching;
@@ -110,6 +111,12 @@ namespace Nop.Services.Catalog
             return await _productAttributeRepository.GetByIdAsync(productAttributeId, cache => default);
         }
 
+        public async Task<ProductAttribute> GetProductAttributeByNameAsync(string productAttributeName)
+        {
+            var result = await _productAttributeRepository.Table.FirstOrDefaultAsync(x=>x.Name==productAttributeName);
+            return result;
+        }
+
         /// <summary>
         /// Gets product attributes 
         /// </summary>
@@ -199,6 +206,18 @@ namespace Nop.Services.Catalog
             var attributes = await _staticCacheManager.GetAsync(allCacheKey, async () => await query.ToListAsync()) ?? new List<ProductAttributeMapping>();
 
             return attributes;
+        }
+
+        public async Task<IList<ProductAttributeMapping>> GetProductAttributeMappingsByAttributeIdAsync(int attributeId)
+        {
+            var attributes = await _productAttributeMappingRepository.Table.Where(x => x.ProductAttributeId == attributeId).ToListAsync();
+            return attributes;
+        }
+
+        public async Task<ProductAttributeMapping> GetProductAttributeMappingAsync(int productId, int attributeId)
+        {
+           return await _productAttributeMappingRepository.Table.FirstOrDefaultAsync(x =>
+                x.ProductAttributeId == attributeId && x.ProductId == productId);
         }
 
         /// <summary>

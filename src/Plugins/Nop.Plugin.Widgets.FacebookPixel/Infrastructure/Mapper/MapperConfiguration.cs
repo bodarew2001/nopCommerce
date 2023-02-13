@@ -24,7 +24,6 @@ namespace Nop.Plugin.Widgets.FacebookPixel.Infrastructure.Mapper
             CreateMap<FacebookPixelModel, FacebookPixelConfiguration>()
                 .ForMember(entity => entity.CustomEvents, options => options.Ignore());
         }
-
         #endregion
 
         #region Properties
